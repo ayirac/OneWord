@@ -33,7 +33,7 @@ var sqlConfig = {
   options: {
     trustServerCertificate: true,
   }
-}; // Hello
+};
 (async function () {
   try {
     console.log(getDate() + '\: Connecting to mssql server in [' + process.env.NODE_ENV + '] enviroment.');
