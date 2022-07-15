@@ -1,0 +1,10 @@
+extends base.pug
+
+block content
+    form(action="/submit-contact-form", method="post")
+        input(type="text", name="Name", class="small")
+        input(type="text", name="Email", class="small")
+        input(type="text", name="Business", class="small")
+        input(type="text", name="Subject", class="small")
+        input(type="text", name="Body", class="large")
+        input(type="submit", name="submit")

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+html(lang="en")
+head
+    meta(charset='utf-8')
+    meta(author='Author')
+    meta(name='description', content="Description!")
+    meta(name='keywords', content="yep,key,woo,word!")
+    meta(name='viewport', id='viewport', content="width=device-width, height=device-height, initial-scale=1")
+    title=title
+    link(rel="stylesheet", href="styles.css")
+body
+    header
+        nav
+            img(src="./assets/starburst.png", alt="star")
+            ul#nav_links
+                li
+                    a(id='nav-random') Random Page
+                li
+                    a(id='nav-current') Current Page
+                li
+                    a(id='nav-stats', href='#stats') Statistics
+                li
+                    a(id='nav-about' href='#about') About
+                li
+                    a(id='nav-contact' href='#contact') Contact
+    div#paper
+        div#page_selector
+            input(type="button" value="+" id="up" onclick="pageChange(true)" disabled)
+            input(type="text", id="page_number", value=pageCount+1, onkeyup="this.value = this.value.replace(/[^0-9\\.]+/g, '')", onblur="seekPage()", onfocus="this.select();")
+            input(type="button" value="-" id="down" onclick="pageChange(false)")
+        div#paper_content
+            h1#paper_header= 'One Word'
+            p#block
+
+        #preloaded-pages
+            p#stats(style='display:none')='Statistics|Hello, this is the statistics page and '
+                br
+                br
+                | thats just how it is...
+            p#about(style='display:none')
+                | About|One Word is a simple bulletin board that allows anyone to submit a word to the top page every !{postCooldown} minutes. 
+                | After !{pageMaxWords} words have been written on the page, a new page is placed on top and the scribing contuines from there.
+                br
+                br
+                br
+                | Pug is used to template/render the html pages & serves variable content when a client first connects. The dynamnic content is made possible with javascript, nodejs, express, and socket.io.
+            p#contact(style='display:none')
+                | Contact|
+                div#contact-wrapper
+                    form#contact-form(action="/submit-contact")
+                        .form-group
+                            label() Name*
+                            input(type="text", name="Name", class="small")
+                            label(class="right-inline") Email
+                            input(type="text", name="Email", class="small")
+                        .form-group
+                            label() Subject*
+                            input(type="text", name="Subject", class="small")
+                            label(class="right-inline") Business
+                            input(type="text", name="Business", class="small")
+                        .form-group
+                            textarea(name="Content", cols="80", rows="10")
+                        input(type="submit", name="submit")
+
+
+        form#post(action="/submit-post", method="post") 
+            input(type="text", name="input1", maxLength="20", onkeydown="this.value = this.value.replace(/[^!-z]/, '')", required)
+            | 
+            input(type="submit")
+
+    footer
+        p
+            | Created by 
+            a(href="#ayriac") ayriac 
+            | 2022
+
+    script(src="/socket.io/socket.io.js")
+    script.
+        var maxPages = !{pageCount} + 1;
+        document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>') // live-reload listening
+        // Connect with express server & setup
+        var socket = io();
+        socket.on('connect', function() {
+            console.log('Connected.')
+            let currentPage = parseInt(document.getElementById('page_number').value);
+            if (currentPage == maxPages)
+                document.getElementById('up').setAttribute('disabled', 'disabled');
+        });
+        // Update the active page with new data on an interval
+        socket.on('data', function(data) {
+            document.getElementById('block').innerHTML = data;
+        });
+
+        // Change page content based on #
+        if (window.location.hash != 0)
+        {
+            document.getElementById('page_number').value = '0';
+            let currentPage = document.getElementById('page_number').value;
+            checkActvePage(currentPage);
+            checkPageLimit(currentPage);
+            let navHTML = document.getElementById(window.location.hash.substr(1)).innerHTML;
+            document.getElementById('paper_header').innerHTML = navHTML.substr(0, navHTML.search(/\|/));
+            document.getElementById('block').innerHTML = navHTML.substr(navHTML.search(/\|/) + 1);
+
+            if (window.location.hash.substr(1) == 'contact')
+                document.getElementById('contact-wrapper').style.display = 'initial';
+        }
+        // Listeners //
+        // Adds keybind for Enter key for page_number function calling
+        document.getElementById('page_number').addEventListener("keyup", ({key}) => {
+            if (key === "Enter")
+                seekPage();
+        })
+        // Setup dynamnic content based on each each nav link
+        var navLinks = document.getElementById('nav_links').getElementsByTagName('a');
+        function resetPaperPageData(random) {
+            if (random)
+                document.getElementById('page_number').value = Math.floor(Math.random() * maxPages) + 1;
+            else
+                document.getElementById('page_number').value = maxPages;
+            seekPage();
+            if (window.location.hash.substr(1) == "contact" || window.location.hash.substr(1) == "about" || window.location.hash.substr(1) == "stats") {
+                history.pushState("", document.title, window.location.pathname);
+                document.getElementById('contact-wrapper').style.display = 'none';
+                document.getElementById('paper_header').innerHTML = "One Word";
+            }
+        }
+        // Random Page & Current
+        document.getElementById(navLinks[0].id).addEventListener('click', function() {
+            resetPaperPageData(true);
+        });
+        document.getElementById(navLinks[1].id).addEventListener('click', function() {
+            resetPaperPageData(false)
+        });
+
+        // Stats, About, & Contact
+        for (let i = 2; i < 5; i++) {
+            document.getElementById(navLinks[i].id).addEventListener('click', function () {
+                // Set page number to '0' to indicate a special page & stop listening for data
+                if (i == 4)
+                    document.getElementById('contact-wrapper').style.display = 'initial';
+                else if (window.location.hash.substr(1) == "contact")
+                    document.getElementById('contact-wrapper').style.display = 'none';
+                    
+                document.getElementById('page_number').value = '0';
+                let currentPage = document.getElementById('page_number').value;
+                checkActvePage(currentPage);
+                checkPageLimit(currentPage);
+                let navHTML = document.getElementById(navLinks[i].id.substr(4)).innerHTML;
+                document.getElementById('paper_header').innerHTML = navHTML.substr(0, navHTML.search(/\|/));
+                document.getElementById('block').innerHTML = navHTML.substr(navHTML.search(/\|/) + 1);
+            })
+        }
+
+        // Seeks out the page specified in page_number inputbox & display it
+        function seekPage() { // broken now somehow, fix it yayaya
+            let seekPage = document.getElementById('page_number');
+            checkActvePage(seekPage.value);
+            
+            if (seekPage.value > maxPages || seekPage.value <= 0) // reset to active page if invalid number
+            {
+                seekPage.value = maxPages;
+            } else {
+                checkPageLimit(seekPage.value);
+            }      
+        }
+
+        // Called on button presses for changing the page up or down. movedUp indicates if upwards or downwards traversal.
+        function pageChange (movedUp) {
+            let currentPage = parseInt(document.getElementById('page_number').value);
+            if (movedUp)
+                currentPage++;
+            else
+                currentPage--;
+            document.getElementById('page_number').value = currentPage;
+            checkActvePage(currentPage);
+            checkPageLimit(currentPage);
+        }
+
+        // Called on page change, if not the active page then stop listening for data for the active page
+        function checkActvePage(currentPage) {
+            if (currentPage != maxPages) {
+                if (document.getElementById('post') != null)
+                    document.getElementById('post').style.display = 'none';
+                socket.off('data');
+            }
+            else {
+                document.getElementById('post').style.display = 'initial';
+                socket.on('data', function(data) {
+                    document.getElementById('block').innerHTML = data;
+                });
+            }
+            // Query the server once for the new page data        
+            socket.emit('pageChange', {pageNumber: currentPage});
+            if (currentPage != 0) {
+                socket.once('data', function(newPage) {
+                    document.getElementById('block').innerHTML = newPage;
+                });
+            }
+            
+        }
+
+        // Disables page navigation buttons if they exceed their limits & queries the server for the new page data
+        function checkPageLimit (currentPage) {
+            if (currentPage == 1)
+                document.getElementById('down').setAttribute('disabled', 'disabled');
+            else
+                document.getElementById('down').removeAttribute('disabled');
+            if (currentPage == maxPages) 
+                document.getElementById('up').setAttribute('disabled', 'disabled');
+            else
+                document.getElementById('up').removeAttribute('disabled');
+        }
+    script(src="https://code.jquery.com/jquery-3.6.0.min.js")
+    script.
+        $(document).ready(function() {
+            $("#contact-form").submit (function(event) {
+                event.preventDefault();
+                
+                let form = $(this);
+                var actionUrl = form.attr('action');
+
+                $.ajax({
+                    type: "POST",
+                    url: actionUrl,
+                    data: form.serialize(),
+                    success: function(data) {
+                        if (data.status == "Success"){
+                            alert("Sent succesfully!")
+                        }
+                        else if (data.status == "Failure") {
+                            let errorMsg = "Error submitting contact form:\n";
+                            for (i = 1; i < data.reasons.length + 1; i++) {
+                                errorMsg += i + ": " + data.reasons[i-1];
+                                if (i == data.reasons.length)
+                                    break;
+                                errorMsg += "\n";
+                            }
+                            alert(errorMsg);
+                        }
+                    }
+                })
+            })
+        })
