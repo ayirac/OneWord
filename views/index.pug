@@ -18,8 +18,6 @@ body
                 li
                     a(id='nav-current') Current Page
                 li
-                    a(id='nav-stats', href='#stats') Statistics
-                li
                     a(id='nav-about' href='#about') About
                 li
                     a(id='nav-contact' href='#contact') Contact
@@ -33,10 +31,6 @@ body
             p#block
 
         #preloaded-pages
-            p#stats(style='display:none')='Statistics|Hello, this is the statistics page and '
-                br
-                br
-                | thats just how it is...
             p#about(style='display:none')
                 | About|One Word is a simple bulletin board that allows anyone to submit a word to the top page every !{postCooldown} minutes. 
                 | After !{pageMaxWords} words have been written on the page, a new page is placed on top and the scribing contuines from there.
@@ -60,20 +54,24 @@ body
                             input(type="text", name="Business", class="small")
                         .form-group
                             textarea(name="Content", cols="80", rows="10")
-                        input(type="submit", name="submit")
-
+                        input(type="button", value="Submit", class="g-recaptcha", data-sitekey="6LfJ2PQgAAAAAOexOWdoHPu1W7ZHMH9hjVQcTseF", data-callback="onSubmit")
+                        #google-credit
+                            | This site is protected by reCAPTCHA and the Google 
+                            a(href="https://policies.google.com/privacy") Privacy Policy
+                            |  and  
+                            a(href="https://policies.google.com/terms") Terms of Service
+                            |  apply
 
         form#post(action="/submit-post", method="post") 
-            input(type="text", name="input1", maxLength="20", onkeydown="this.value = this.value.replace(/[^!-z]/, '')", required)
+            input(type="text", id="post-input", name="post", maxLength="20", onkeydown="this.value = this.value.replace(/[^!-z]/, '')", required)
             | 
             input(type="submit")
-
     footer
         p
             | Created by 
             a(href="#ayriac") ayriac 
             | 2022
-
+    script(src="https://www.google.com/recaptcha/api.js")
     script(src="/socket.io/socket.io.js")
     script.
         var maxPages = !{pageCount} + 1;
@@ -119,7 +117,7 @@ body
             else
                 document.getElementById('page_number').value = maxPages;
             seekPage();
-            if (window.location.hash.substr(1) == "contact" || window.location.hash.substr(1) == "about" || window.location.hash.substr(1) == "stats") {
+            if (window.location.hash.substr(1) == "contact" || window.location.hash.substr(1) == "about") {
                 history.pushState("", document.title, window.location.pathname);
                 document.getElementById('contact-wrapper').style.display = 'none';
                 document.getElementById('paper_header').innerHTML = "One Word";
@@ -133,11 +131,11 @@ body
             resetPaperPageData(false)
         });
 
-        // Stats, About, & Contact
-        for (let i = 2; i < 5; i++) {
+        // About, & Contact
+        for (let i = 2; i < 4; i++) {
             document.getElementById(navLinks[i].id).addEventListener('click', function () {
                 // Set page number to '0' to indicate a special page & stop listening for data
-                if (i == 4)
+                if (i == 3)
                     document.getElementById('contact-wrapper').style.display = 'initial';
                 else if (window.location.hash.substr(1) == "contact")
                     document.getElementById('contact-wrapper').style.display = 'none';
@@ -168,6 +166,10 @@ body
         // Called on button presses for changing the page up or down. movedUp indicates if upwards or downwards traversal.
         function pageChange (movedUp) {
             let currentPage = parseInt(document.getElementById('page_number').value);
+            if (currentPage == 0) {
+                document.getElementById('paper_header').innerHTML = "One Word";
+                document.getElementById('contact-wrapper').style.display = 'none';
+            }
             if (movedUp)
                 currentPage++;
             else
@@ -197,7 +199,12 @@ body
                     document.getElementById('block').innerHTML = newPage;
                 });
             }
-            
+        }
+
+        // Called when the gRecaptcha has been solved successfully
+        function onSubmit(token) {
+            document.getElementById("contact-form").requestSubmit();
+            grecaptcha.reset();
         }
 
         // Disables page navigation buttons if they exceed their limits & queries the server for the new page data
@@ -214,7 +221,7 @@ body
     script(src="https://code.jquery.com/jquery-3.6.0.min.js")
     script.
         $(document).ready(function() {
-            $("#contact-form").submit (function(event) {
+            $("form").submit (function(event) {
                 event.preventDefault();
                 
                 let form = $(this);
@@ -226,10 +233,10 @@ body
                     data: form.serialize(),
                     success: function(data) {
                         if (data.status == "Success"){
-                            alert("Sent succesfully!")
+                            alert("Submitted contact successfully.")
                         }
                         else if (data.status == "Failure") {
-                            let errorMsg = "Error submitting contact form:\n";
+                            let errorMsg = "Error submitting form:\n";
                             for (i = 1; i < data.reasons.length + 1; i++) {
                                 errorMsg += i + ": " + data.reasons[i-1];
                                 if (i == data.reasons.length)
@@ -238,7 +245,13 @@ body
                             }
                             alert(errorMsg);
                         }
+                        // Query the server once for the new page data        
+                        socket.emit('pageChange', {pageNumber: parseInt(document.getElementById('page_number').value)});
+                        socket.once('data', function(newPage) {
+                            document.getElementById('block').innerHTML = newPage;
+                        });
                     }
                 })
+                document.getElementById("post-input").value = "";
             })
         })

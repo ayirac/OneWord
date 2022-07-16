@@ -2,6 +2,7 @@
   "dependencies": {
     "body-parser": "^1.20.0",
     "express": "^4.18.1",
+    "google-recaptcha": "^1.1.0",
     "livereload": "^0.9.3",
     "lorem-ipsum": "^2.0.8",
     "mssql": "^8.1.2",
@@ -19,7 +20,7 @@
   "scripts": {
     "test": "echo \"Error no test sepcified\" && exit 1",
     "start": "SET NODE_ENV=staging&& nodemon app.js",
-    "development": "SET NODE_ENV=development&& nodemon app.js&& ignore app.js"
+    "development": "SET NODE_ENV=development&& nodemon -e js,pug"
   },
   "repository": {
     "type": "git",

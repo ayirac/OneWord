@@ -202,19 +202,19 @@ form input[type=text] {
     color: var(--blond);
 }
 
-form input[type=submit] {
+form input[type=submit],[type=button]  {
     font-weight: bold;
     background-color: #b3975a;
     border: 2px solid #866d45;
     color: var(--blond);
 }
 
-    input[type=submit]:hover {
+    input[type=submit],[type=button]:hover {
         background-color: var(--fawn);
         color:black;
     }
 
-    input[type=submit]:active {
+    input[type=submit],[type=button]:active {
         background-color: rgb(224, 194, 149);
         color:black;
     }
@@ -274,4 +274,19 @@ textarea {
 #post input[type=text]{
     width: 30vw;
     max-width: 100px;
+}
+
+.grecaptcha-badge { 
+    visibility: hidden;
+}
+
+#google-credit {
+    position: absolute;
+    width: 15vw;
+    left: 0;
+    right: 0;
+    margin: auto;
+    bottom: 2vh;
+    font-size: 0.5vw;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
