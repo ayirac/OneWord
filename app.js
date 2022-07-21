@@ -74,14 +74,27 @@ app.get('/', function (req, res) {
 app.post('/submit-post', function (req, res) {
   let IPAddress = req.socket.remoteAddress.replace("::ffff:", "");
   let submittedWord = striptags(req.body.post);
+  const invalidReasons = [];
   // Check if valid word before inserting
   if (submittedWord.search(/[^!-z]/g) != -1) { // Invalid character type
     console.log(getDate() + ': ' + IPAddress + ' INVALID CHARACTER received from ' + IPAddress + ': \'' + submittedWord + '\'');
-    return res.redirect('/?error=invalid_character')
+    invalidReasons.push('Invalid character')
+
+    let jsonResponse = {
+      status: "Failure",
+      reasons: invalidReasons
+    };
+    return res.json(jsonResponse)
   }
   else if (submittedWord.length > 20 || submittedWord.length == 0) { // Invalid length
     console.log(getDate() + ': invalid string received from ' + IPAddress + ': \'' + submittedWord + '\'');
-    return res.redirect('/?error=invalid_length')
+    invalidReasons.push('Invalid length')
+
+    let jsonResponse = {
+      status: "Failure",
+      reasons: invalidReasons
+    };
+    return res.json(jsonResponse)
   }
   else {
     let clientCooldown = false;
@@ -94,7 +107,6 @@ app.post('/submit-post', function (req, res) {
       }
     }
     if (clientCooldown) {
-      const invalidReasons = [];
       invalidReasons.push("Wait " + clientsOnCooldown[j].timeLeft + " minutes to post again.");
       let jsonResponse = {
         status: "Failure",

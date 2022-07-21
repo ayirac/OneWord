@@ -1,6 +1,6 @@
 :root {
     --rich-black-fogra-39: #02020bff;
-    --blond: #fffbbdff;
+    --blond: #fffbbd;
     --fawn: #e6aa68ff;
     --coyote-brown: #7a542eff;
     --hunter-green: #4b644aff;
@@ -167,21 +167,21 @@ footer a {
     border-radius: 2px;
 }
 
-    #page_selector input[type=button]:hover {
-        background-color: var(--fawn);
-        color:black;
-    }
+#page_selector input[type=button]:hover {
+    background-color: var(--fawn);
+    color:black;
+}
 
-    #page_selector input[type=button]:active {
-        background-color: rgb(224, 194, 149);
-        color:black;
-    }
+#page_selector input[type=button]:active {
+    background-color: rgb(224, 194, 149);
+    color:black;
+}
 
-    #page_selector input[type=button]:disabled {
-        background-color: rgb(151, 112, 79);
-        border-color: rgb(117, 90, 68);
-        color:rgb(104, 90, 90);
-    }
+#page_selector input[type=button]:disabled {
+    background-color: rgb(151, 112, 79);
+    border-color: rgb(117, 90, 68);
+    color:rgb(104, 90, 90);
+}
 
 #page_selector #page_number {
     height: 5vmin;
@@ -289,4 +289,38 @@ textarea {
     bottom: 2vh;
     font-size: 0.5vw;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+.alert {
+    position: absolute;
+    display: none;
+    padding: 1.0vw;
+    width: 50vw;
+    left: 0;
+    right: 0;
+    margin: auto;
+    margin-top: 5px;
+    background-color: #ef3030;
+    border-radius: 10px;
+    color: var(--blond);
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 1.8vmin;
+}
+
+.alert-closebtn {
+    color: var(--blond);
+    font-weight: bold;
+    float: right;
+    font-size: 2vmin;
+    line-height: 2vmin;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.alert-closebtn:hover {
+    color: black;
+}
+
+#post-alert {
+    bottom: 7vh;
 }

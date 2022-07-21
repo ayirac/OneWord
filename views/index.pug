@@ -55,13 +55,19 @@ body
                         .form-group
                             textarea(name="Content", cols="80", rows="10")
                         input(type="button", value="Submit", class="g-recaptcha", data-sitekey="6LfJ2PQgAAAAAOexOWdoHPu1W7ZHMH9hjVQcTseF", data-callback="onSubmit")
+                        .alert#contact-alert(onclick="document.getElementById('contact-alert').style.display = 'none'")
+                            span.alert-closebtn &times;
+                            .alert-message
                         #google-credit
                             | This site is protected by reCAPTCHA and the Google 
                             a(href="https://policies.google.com/privacy") Privacy Policy
                             |  and  
                             a(href="https://policies.google.com/terms") Terms of Service
                             |  apply
-
+        
+        .alert#post-alert(onclick="document.getElementById('post-alert').style.display = 'none'")
+            span.alert-closebtn &times;
+            .alert-message
         form#post(action="/submit-post", method="post") 
             input(type="text", id="post-input", name="post", maxLength="20", onkeydown="this.value = this.value.replace(/[^!-z]/, '')", required)
             | 
@@ -182,8 +188,10 @@ body
         // Called on page change, if not the active page then stop listening for data for the active page
         function checkActvePage(currentPage) {
             if (currentPage != maxPages) {
-                if (document.getElementById('post') != null)
+                if (document.getElementById('post') != null) {
                     document.getElementById('post').style.display = 'none';
+                    document.getElementById('post-alert').style.display = 'none';
+                }
                 socket.off('data');
             }
             else {
@@ -223,30 +231,40 @@ body
         $(document).ready(function() {
             $("form").submit (function(event) {
                 event.preventDefault();
-                
+                let pageNumb = parseInt(document.getElementById('page_number').value);
+                let alertType;
+                if (pageNumb == 0)
+                    alertType = 'contact-alert';
+                else
+                    alertType = 'post-alert';
+                let alertBox = document.getElementById(alertType);
+
                 let form = $(this);
                 var actionUrl = form.attr('action');
-
                 $.ajax({
                     type: "POST",
                     url: actionUrl,
                     data: form.serialize(),
                     success: function(data) {
                         if (data.status == "Success"){
-                            alert("Submitted contact successfully.")
+                            alertBox.getElementsByClassName('alert-message')[0].innerHTML = "Successfully submitted!";
+                            alertBox.style.backgroundColor = '#1ec047';
                         }
                         else if (data.status == "Failure") {
                             let errorMsg = "Error submitting form:\n";
                             for (i = 1; i < data.reasons.length + 1; i++) {
-                                errorMsg += i + ": " + data.reasons[i-1];
-                                if (i == data.reasons.length)
-                                    break;
-                                errorMsg += "\n";
+                                if (i != data.reasons.length)
+                                    errorMsg += data.reasons[i-1] + ", ";
+                                else
+                                    errorMsg += data.reasons[i-1];
                             }
-                            alert(errorMsg);
+                            alertBox.getElementsByClassName('alert-message')[0].innerHTML = errorMsg;
+                            alertBox.style.backgroundColor = '#ef3030';
                         }
+                        alertBox.style.display = 'revert';
+
                         // Query the server once for the new page data        
-                        socket.emit('pageChange', {pageNumber: parseInt(document.getElementById('page_number').value)});
+                        socket.emit('pageChange', {pageNumber: pageNumb});
                         socket.once('data', function(newPage) {
                             document.getElementById('block').innerHTML = newPage;
                         });
